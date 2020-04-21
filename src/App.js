@@ -22,7 +22,6 @@ import * as actionCreators from './actions/App/App';
 import _ from 'lodash';
 
 
-
 import {
   Layout,
   Icon,
@@ -35,7 +34,8 @@ import {
   Input,
   List,
   notification,
-  Progress
+  Progress,
+  Switch
 } from 'antd';
 
 const {
@@ -65,7 +65,7 @@ const shell = window.electron.shell;
 const uuidv1 = require('uuid/v1');
 
 
-const package = require('../package.json');
+const packageApp = require('../package.json');
 
 
 if (process.platform === 'darwin') {
@@ -95,13 +95,16 @@ class App extends Component {
     super(props);
     this.state = {
       url: null,
-      uuid: null
+      uuid: null,
+      shuiyinState: false
     }
   }
 
   componentDidMount() {
 
 
+
+    this.getList();
     //检测更新 
 
     ipcRenderer.send('checkForUpdate');
@@ -111,8 +114,6 @@ class App extends Component {
 
     //接收版本和时间
     ipcRenderer.on('app-getVersionTime', (event, arg, arg2) => {
-
-
 
       this.props.App_actions.setVersion(arg);
       this.props.App_actions.sendVersionTime(arg2);
@@ -124,7 +125,7 @@ class App extends Component {
     ipcRenderer.send('app-getUuid');
 
     //设置uuid并显示通知
-    ipcRenderer.on('app-setUuid', (event, arg) => {
+    ipcRenderer.on('app-setUuid', (event, arg, AppPlatform) => {
 
       console.log(arg, 'arg');
 
@@ -135,14 +136,21 @@ class App extends Component {
 
       // let socket = io('http://localhost:3001');
 
+      console.log(packageApp.platform, 'packageApp.platform');
+      console.log(AppPlatform, 'AppPlatform');
 
-      if (package.platform == 'test') {
-        var socket = io('http://node-server.heqi.io');
-      } else if (package.platform == 'prod') {
-        var socket = io('http://node-server.heqiauto.com');
-      } else if (package.platform == 'pre') {
-        var socket = io('http://pre-node-server.heqiauto.com');
-      }
+
+      var socket = io('http://youyong.ba:8084');
+      // if (AppPlatform == 'test') {
+      //   var socket = io('http://node-server.heqi.io');
+      // } else if (AppPlatform == 'prod') {
+      //   console.log('here here here here prod')
+      //   var socket = io('http://node-server.heqiauto.com');
+      // } else if (AppPlatform == 'pre') {
+      //   var socket = io('http://pre-node-server.heqiauto.com');
+      // } else {
+      //   var socket = io('http://node-server.heqiauto.com');
+      // }
 
 
       socket.on(`client/${arg}`, function (obj) {
@@ -150,27 +158,9 @@ class App extends Component {
 
         ipcRenderer.send('app-outputWSData', obj);
 
-        // notification['success']({
-        // 	message: obj.msg.title,
-        // 	description: obj.msg.describe
-        // });
       })
 
     })
-
-
-
-    // socket.on('client/1234', function (obj) {
-    //   // notification['success']({
-    //   //   message: obj.msg.note,
-    //   //   description: obj.msg.gender,
-    //   // });
-
-    //   //发送数据 
-    //   ipcRenderer.send('app-outputWSData', obj);
-
-    // })
-
 
 
 
@@ -226,8 +216,6 @@ class App extends Component {
 
     ipcRenderer.on('app-updateDownload', (event, arg) => {
 
-
-
       confirm({
         title: '已更新到最新版本，是否重新启动？',
         content: '如果重新启动，您将使用最新版本',
@@ -239,15 +227,10 @@ class App extends Component {
         onCancel() { },
       });
 
-
-
       this.props.App_actions.setNewVersion(false);
-
 
       this.props.App_actions.setPercent(100);
       this.props.App_actions.setResetUpdate(true);
-
-
 
 
     });
@@ -256,6 +239,11 @@ class App extends Component {
     this.initMenu();
   }
 
+
+  async getList() {
+    // console.log(this.props.App_actions.getList(), 'this.props');
+    this.props.App_actions.getList()
+  }
 
   clickHandle = (img) => {
     ipcRenderer.send('toggle-image', img);
@@ -286,7 +274,7 @@ class App extends Component {
     if (img.split('?').length > 1) {
       urlParams = `${urls}&aclientId=${this.state.uuid}`;
     } else {
-      urlParams = `${urls}?aclientId=${this.state.uuid}`
+      urlParams = `${urls}?aclientId=${this.state.uuid}`;
     }
     // shell.openExternal(img);
     ipcRenderer.send('webSiteData', urlParams, this.state.uuid);
@@ -391,7 +379,6 @@ class App extends Component {
 
   removeCard(e) {
 
-
     let id = e.currentTarget.dataset.id;
 
     confirm({
@@ -441,6 +428,16 @@ class App extends Component {
   }
 
 
+  shuiyin() {
+    this.setState({
+      shuiyinState: !this.state.shuiyinState
+    },() => {
+      ipcRenderer.send('shuiyin', this.state.shuiyinState);
+    });
+    
+
+  }
+
   /**
    * 手动检测更新
    */
@@ -448,6 +445,10 @@ class App extends Component {
     ipcRenderer.send('checkForUpdate');
   }
 
+
+  reflash() {
+    this.getList();
+  }
   render() {
 
     const { getFieldDecorator } = this.props.form;
@@ -457,23 +458,69 @@ class App extends Component {
 
     return (
       <Layout className="App" height={window.document.body.offsetHeight + 'px'}>
+        {/* <div className="optionWindow"> */}
+        {/* <a href="javascript:void(0)">
+            最小化
+          </a>
+          <a href="javascript:void(0)" onClick={() => {
+            ipcRenderer.send('max');
+          }}>
+            最大化
+          </a> */}
+
+
+        {/* <a href="javascript:void(0)" onClick={() => {
+            ipcRenderer.send('min');
+          }}>
+            关闭
+          </a> */}
+        {/* </div> */}
         <Header className="layout_header">
-          <div className="banner" />
-          <span className="checkUpdate" onClick={this.checkForUpdate.bind(this)}>检查更新{this.props.App_reduces.newVersion ? (<i className="checkTxing"></i>) : null}</span>
+          <div className="logo">游泳吧</div>
+
+          <div className="closeWindows" title="关闭" onClick={() => {
+            ipcRenderer.send('min');
+          }}>
+
+            
+
+            <Icon type="close">
+
+            </Icon>
+           
+
+          </div>
+          {/* <div className="banner" /> */}
+          {/* <span className="checkUpdate" onClick={this.checkForUpdate.bind(this)}>检查更新{this.props.App_reduces.newVersion ? (<i className="checkTxing"></i>) : null}</span> */}
         </Header>
         <Content className="layout_content">
 
-          <Card className="region-card" title="应用列表" extra={<div><Button type="primary" className="addressBtn" onClick={this.addAddress.bind(this)} icon="plus" size={'large'} >
-            添加应用
+          <Card className="region-card" title="活动列表" extra={<div><Button type="primary" className="addressBtn" onClick={this.addAddress.bind(this)} icon="plus" size={'large'} >
+            发布活动
           </Button>
             <Divider type="vertical" style={{ height: '39px' }} />
             <Button className="removeAllAddress" onClick={this.removeAllAddress.bind(this)} size={'large'} >
-              清空应用
+              个人中心
+            </Button>
+
+            <Divider type="vertical" style={{ height: '39px' }} />
+            <Button className="removeAllAddress" onClick={this.reflash.bind(this)} size={'large'} >
+              刷新
+            </Button>
+            <Divider type="vertical" style={{ height: '39px' }} />
+            <Button className="removeAllAddress" onClick={this.removeAllAddress.bind(this)} size={'large'} >
+              录屏
+            </Button>
+
+
+            <Divider type="vertical" style={{ height: '39px' }} /> 
+            <Button className="removeAllAddress" onClick={this.shuiyin.bind(this)} size={'large'} >
+              {this.state.shuiyinState?`关闭水印`:`打开水印`}
             </Button>
           </div>}>
             <List
               grid={{
-                gutter: 112,
+                gutter: 30,
                 xs: 1,
                 sm: 2,
                 md: 3,
@@ -483,18 +530,18 @@ class App extends Component {
               }}
               className="App-list"
               locale={{ "emptyText": "您尚未添加应用，点击【添加应用】去添加吧～" }}
-              dataSource={this.props.App_reduces.items}
+              dataSource={this.props.App_reduces.list}
               renderItem={item => (
                 <List.Item >
-                  <Card className="itemCard" cover={<Avatar className="ava" onClick={() => this.openWebSite(item.address)} key={new Date().getTime()} style={{ backgroundColor: item.color, marginRight: '16px', verticalAlign: 'middle' }} size={64}>
-                    {item.sortTitle}
+                  <Card className="itemCard" cover={<Avatar className="ava"  key={new Date().getTime()} style={{ backgroundColor: item.color, marginRight: '16px', verticalAlign: 'middle' }} size={64}>
+                    {item.sendUser.substr(0,2)}
                   </Avatar>} extra={
                     item.isEdit ? (<div>
-                      <Icon type="edit" style={{ marginRight: '8px' }} className="smallCardEdit" data-id={item.id} onClick={this.editAddress.bind(this)} />
+                      <Icon type="edit" style={{ marginRight: '8px' }} className="smallCardEdit" data-id={item.id}  />
                       <Icon type="close" data-id={item.id} className="smallCardClose" onClick={this.removeCard.bind(this)} />
                     </div>) : (<div style={{ visibility: "hidden" }}>占位</div>)
                   }>
-                    <Meta title={item.title} description={item.address} />
+                    <Meta title={item.title} description={`报名截止时间：${item.startTime}费用：${item.price}元 `}/>
                   </Card>
                 </List.Item>
               )}
@@ -536,7 +583,7 @@ class App extends Component {
                   }]
                 })(
                   <Input
-                    placeholder="http://erp.heiqiauto.com"
+                    placeholder={packageApp.env == 'aleqipei' ? "http://s.aleqipei.com" : "http://erp.heiqiauto.com"}
                   />,
                 )}
               </Form.Item>
@@ -560,28 +607,11 @@ class App extends Component {
         </Content>
         <Footer className="layout_footer">
 
-          {/* {this.props.App_reduces.newVersion ? (
-              <div className="clearfix">
-                <div className="left">检测到新版本，正在下载,请稍后:</div>
-                <div className="left" style={{ width: "100px" }}>
-                  <Progress percent={this.props.App_reduces.percent ? this.props.App_reduces.percent : 0} strokeColor={'#e56045'} status="active" />
-                </div>
-              </div>
-            ) : this.props.App_reduces.resetUpdate ? (
-              <button type="primary" onClick={this.resetUpdateBtn.bind(this)}>重启</button>
-            ) : (
-                  <span>
-                    当前版本:{this.props.App_reduces.version}
-                    (发布时间:{this.props.App_reduces.sendVersionTime ? moment(this.props.App_reduces.sendVersionTime).format('YYYY-MM-DD HH:mm:ss') : ''})
-                  </span>
-                )
-            } */}
-
-          {/* <span className="footerInfo">版本 V1.0.0 www.阿乐汽配.com 2016-2019© All Rights Reserved</span>          */}
-          <span className="footerInfo">版本 V{this.props.App_reduces.version} www.阿乐汽配.com 2016-2019© All Rights Reserved</span>
+          {/* <span className="footerInfo">版本 V{this.props.App_reduces.version} www.aleqipei.com 2016-2019© All Rights Reserved</span> */}
+              <span className="footerInfo">[{this.state.uuid}]版本号【{this.props.App_reduces.version}】youyong.ba(demo)</span>
+          
           <iframe
             style={{ width: '100%', overflow: 'visible' }}
-
             ref="iframe"
             src={"http://client.aleqipei.com"}
             // height={window.document.body.offsetHeight + 'px'}

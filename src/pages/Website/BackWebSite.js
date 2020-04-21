@@ -2,8 +2,6 @@ import React, {
     Component
 } from 'react';
 
-import 'isomorphic-unfetch';
-
 import {
     connect
 } from 'react-redux';
@@ -20,7 +18,7 @@ import {
 
 // import axios from 'axios';
 
-class Website extends Component {
+class BackWebSite extends Component {
 
     constructor(props) {
         super(props);
@@ -29,15 +27,11 @@ class Website extends Component {
             iFrameHeight: '0px',
             clearCache: '',
             data: '',
-            aclientId: '',
-            dateTime: ""
+            aclientId: ''
         }
     }
 
     componentDidMount() {
-
-        this.cnzzInit()
-
 
         this.setState({
             websiteUrl: this.props.location.query.site,
@@ -47,60 +41,12 @@ class Website extends Component {
         });
     }
 
-
-    async cnzzInit() {
-
-        clearInterval(this.timerAleqipeiActive);
-
-        console.log(this.props.location.query.aclientId, this.props.location.query.site, '####ccccc');
-        setInterval(() => {
-
-
-            this.setState({
-                dateTime: new Date().getTime()
-            }, () => {
-                console.log(this.state.dateTime);
-            })
-        }, 15 * (60 * 1000));
-
-        // }, 15 * (60 * 1000));
-
-        // let json = await res.json();
-
-        // console.log(json, 'json');
-
-    }
     render() {
 
         return (
             <Layout className="layout" >
 
                 <div>{this.state.data}</div>
-
-
-
-                <iframe
-                    style={{ width: '100%', overflow: 'visible' }}
-
-                    ref="iframe"
-                    src={"http://client.aleqipei.com/aleqipei/"}
-                    // height={window.document.body.offsetHeight + 'px'}
-                    height={"0px"}
-                    scrolling="yes"
-                    frameBorder="0"
-                />
-
-                <iframe
-                    style={{ width: '100%', overflow: 'visible' }}
-                    id="iframeId"
-                    ref="iframe"
-                    key={this.state.dateTime}
-                    src={"http://client.aleqipei.com/aleqipei_active/"}
-                    // height={window.document.body.offsetHeight + 'px'}
-                    height={"0px"}
-                    scrolling="yes"
-                    frameBorder="0"
-                />
 
                 <iframe
                     security="restricted"
@@ -119,7 +65,7 @@ class Website extends Component {
                     key={this.state.clearCache}
                     style={{ width: '100%', overflow: 'visible' }}
                     ref="iframe"
-                    src={`${this.state.websiteUrl}?t=${this.state.clearCache}&aclientUuid=${this.state.aclientId}`}
+                    src={`${this.state.websiteUrl}`}
                     // height={window.document.body.offsetHeight + 'px'}
                     height={this.state.iFrameHeight}
                     scrolling="yes"
@@ -134,7 +80,6 @@ class Website extends Component {
 
 //将state.counter绑定到props的counter
 const mapStateToProps = (state) => {
-    console.log(state, 'state');
     return {
         userList: state.userList
     }
@@ -148,4 +93,4 @@ const mapDispatchToProps = (dispatch, ownProps) => {
 
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(Website);
+export default connect(mapStateToProps, mapDispatchToProps)(BackWebSite);

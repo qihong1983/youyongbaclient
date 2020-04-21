@@ -194,8 +194,43 @@ const setFormViewInfo = (data) => {
     }
 }
 
+/**
+ * 获得列表
+ */
+const getList = () => {
+    return async function (dispatch) {
+
+
+
+        let res = await fetch(`https://api.youyong.ba/list?page=0&keyword=`, {
+            // let res = await fetch(`http://localhost:8081/list?page=${data.offset - 1}&keyword=${encodeURI(data.keyword)}`, {
+            method: 'GET',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': 'Bearer xxx'
+            }
+
+        });
+
+        let json = await res.json();
+
+
+        console.log(json, 'jsonjsonjson');
+
+
+        
+        
+        dispatch({
+            type: "APP_LIST",
+            payload: json.data
+        })
+    }
+}
 
 export {
+    //getList
+    getList,
     //编辑地址
     editAddAddressVisible,
     //填加地址

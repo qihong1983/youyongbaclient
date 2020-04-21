@@ -29,9 +29,6 @@ const Menu = electron.Menu;
 const Notification = electron.Notification;
 
 
-
-
-
 const os = require('os');
 
 var Jimp = require("jimp");
@@ -51,21 +48,22 @@ var aleqipei = new AutoLaunch({
 
 const package = require('../package.json');
 
-console.log(package, 'package配置文件');
 
+
+console.log(package, 'packagepackage');
+// console.log(package, 'package配置文件');
 
 
 /**
  * 页面列表数据库配置
  */
+
 let data_db = new Datastore({
   filename: `${app.getPath('userData')}/nedb.db`,
   autoload: true
 });
 
-console.log(data_db, '数据库存在哪里');
-
-
+// console.log(data_db, '数据库存在哪里');
 
 /**
  * 版本数据库配置
@@ -85,6 +83,7 @@ let uuid_db = new Datastore({
 
 console.log(`${app.getPath('userData')}/uuid.db`);
 
+var globalWebSite = 'http://xxxx.com/site/login';
 
 
 //通知变量
@@ -115,19 +114,28 @@ function createWindow() {
   //入口页面 -- 初始化窗口
   mainWindow = new BrowserWindow(Config.mwCfg());
 
+  //入口页面 -- 初始化窗口
+  tMWindow = new BrowserWindow(Config.mwCfgTm());
+
+
   //打开站点 -- 初始化窗口
   webSiteWindow = new BrowserWindow(Config.wsCfg(mainWindow));
 
   //判断是打包前还是打包后 
   mainWindow.loadURL(isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, '../build/index.html')}`);
+  tMWindow.loadURL(isDev ? 'http://localhost:3000/#/blackpage' : `file://${path.join(__dirname, '../build/index.html#/blackpage')}`);
   webSiteWindow.loadURL(isDev ? 'http://localhost:3000/#/website' : `file://${path.join(__dirname, '../build/index.html#website')}`);
 
+
+
+  // tMWindow.setAlwaysOnTop(top);
   /*隐藏electron创听的菜单栏*/
 
   //调试
   if (isDev) {
     mainWindow.webContents.openDevTools();
-    webSiteWindow.webContents.openDevTools();
+  //   webSiteWindow.webContents.openDevTools();
+  // tMWindow.webContents.openDevTools();
   }
   // console.log(Notification.isSupported(), '是否支持桌面');
 
@@ -138,25 +146,25 @@ function createWindow() {
 
     item.on('updated', (event, state) => {
       if (state === 'interrupted') {
-        console.log('Download is interrupted but can be resumed')
+        // console.log('Download is interrupted but can be resumed')
       } else if (state === 'progressing') {
         if (item.isPaused()) {
-          console.log('Download is paused')
+          // console.log('Download is paused')
         } else {
-          console.log(`Received bytes: ${item.getReceivedBytes()}`)
+          // console.log(`Received bytes: ${item.getReceivedBytes()}`)
         }
       }
     })
     item.once('done', (event, state) => {
       if (state === 'completed') {
-        console.log(item.getSavePath(), '####')
+        // console.log(item.getSavePath(), '####')
 
         // .webContents.executeJavaScript("window.print()");
 
         shell.openItem(item.getSavePath());
-        console.log('Download successfully')
+        // console.log('Download successfully')
       } else {
-        console.log(`Download failed: ${state}`)
+        // console.log(`Download failed: ${state}`)
       }
     })
   });
@@ -174,13 +182,35 @@ function createWindow() {
 
   })
 
+  //最小化
+  ipcMain.on('min', e => mainWindow.minimize());
+
+  //最大化
+  ipcMain.on('max', e => {
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize()
+    } else {
+      mainWindow.maximize()
+    }
+  });
+
   mainWindow.on('close', (event) => {
 
-    mainWindow = null
+    // mainWindow = null
 
-    if (process.platform !== 'darwin') {
-      app.quit();
+
+    // if (process.platform !== 'darwin') {
+
+    //   app.quit();
+    // }
+
+
+    if (process.platform === 'darwin') {
+      app.dock.hide();
+    } else {
+      mainWindow.setSkipTaskbar(true);
     }
+
   });
 
   //关闭打开浏览器的地址
@@ -194,7 +224,7 @@ function createWindow() {
 
     //更新错误
     autoUpdater.on('error', function (error) {
-      console.log('error');
+      // console.log('error');
       // sendUpdateMessage(returnData.error)
     });
 
@@ -262,7 +292,7 @@ function createWindow() {
     autoUpdater.on('download-progress', function (progressObj) {
       // console.log(progressObj, '进度');
 
-      console.log(progressObj, '******');
+      // console.log(progressObj, '******');
       // setTimeout(function () {
       mainWindow.webContents.send('app-downloadProgress', progressObj)
       // }, 500)
@@ -272,7 +302,7 @@ function createWindow() {
 
     autoUpdater.on('update-downloaded', function (event, releaseNotes, releaseName, releaseDate, updateUrl, quitAndUpdate) {
 
-      console.log('##############');
+      // console.log('##############');
 
 
       setTimeout(function () {
@@ -308,10 +338,39 @@ function createWindow() {
     tray = new Tray(path.join(__dirname, '16x16.png'));
   } else {
     tray = new Tray(path.join(__dirname, '32x32.png'));
+
+    tray.on('balloon-click', (e) => {
+      e.preventDefault();
+
+      console.log(1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111);
+      var webSiteWindow2 = new BrowserWindow({
+        width: 1024,
+        height: 681,
+        title: 'xxx',
+        show: false,
+        webPreferences: {
+          webSecurity: false,
+          nodeIntegration: true,
+          webviewTag: true
+        }
+      });
+
+      webSiteWindow2.loadURL(isDev ? `http://localhost:3000/#/backwebsite?site=${globalWebSite}` : `file://${path.join(__dirname, '../build/index.html#backwebsite')}?site=${globalWebSite}&timer=${new Date().getTime()}`);
+      //xxxxx
+      //只有在开发环境打开控制台
+      if (isDev) {
+        webSiteWindow2.webContents.openDevTools();
+      }
+
+
+      webSiteWindow2.show();
+
+      webSiteWindow2.maximize();
+
+    })
   }
 
 
-  console.log(tray, 'traytraytraytray');
   const contextMenu = Menu.buildFromTemplate([
     {
       label: '打开', click: function () {
@@ -366,16 +425,21 @@ function createWindow() {
   mainWindow.on('hide', () => {
     tray.setHighlightMode('never')
   })
-  tray.setToolTip('阿乐汽配客户端');
+  tray.setToolTip('xxcccss客户端');
   tray.setContextMenu(contextMenu);
 
   tray.on('double-click', (event) => {
 
     event.preventDefault();
-    console.log('testtest');
+    // console.log('testtest');
     //主窗口显示隐藏切换
 
-
+    clearInterval(timer);
+    if (process.platform === 'darwin') {
+      tray.setImage(path.join(__dirname, '16x16.png'));
+    } else {
+      tray.setImage(path.join(__dirname, '32x32.png'));
+    }
     mainWindow.show();
     // mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
     // mainWindow.isVisible() ? mainWindow.setSkipTaskbar(false) : mainWindow.setSkipTaskbar(true);
@@ -386,6 +450,7 @@ function createWindow() {
 const gotTheLock = app.requestSingleInstanceLock()
 
 if (!gotTheLock) {
+  console.log(3333);
   app.quit()
 } else {
   app.on('second-instance', (event, commandLine, workingDirectory) => {
@@ -396,7 +461,10 @@ if (!gotTheLock) {
     }
   })
 
-  app.commandLine.appendSwitch("--disable-http-cache");
+  if (isDev) {
+    app.commandLine.appendSwitch("--disable-http-cache");
+  }
+
   // 启动渲染进程入口
   app.on('ready', createWindow);
 }
@@ -408,7 +476,19 @@ if (!gotTheLock) {
 app.on('window-all-closed', () => {
 
 
+  console.log('####  这里关闭 ####');
 
+
+
+  // if (process.platform === 'darwin') {
+  //   app.dock.hide();
+  // } else {
+  //   mainWindow.setSkipTaskbar(true);
+  // }
+  // mainWindow.hide();
+  // app.quit();
+
+  // mainWindow.minimize()
   app.quit();
   if (process.platform !== 'darwin') {
     console.log('window close');
@@ -420,20 +500,44 @@ app.on('window-all-closed', () => {
 // 这个事件不知道干什么用的 
 app.on('activate', () => {
 
-  console.log('1111111111');
+  // console.log('1111111111');
   if (mainWindow == null) {
     createWindow();
   }
 });
 
 //接收图片
-console.log('123123123')
+// console.log('123123123')
+
+ipcMain.on('shuiyin', (event, args) => {
+
+  console.log(event, args, '*********');
+
+  if (args) {
+    tMWindow.setIgnoreMouseEvents(true);
+
+    tMWindow.setAlwaysOnTop(true);
+    // tMWindow.setFullScreen(true);
+    tMWindow.setSimpleFullScreen(true);
+    tMWindow.show();
+  } else {
+    tMWindow.setIgnoreMouseEvents(false);
+
+    tMWindow.setAlwaysOnTop(false);
+    // tMWindow.setFullScreen(false);
+    tMWindow.setSimpleFullScreen(false);
+
+    tMWindow.hide();
+  }
+  
+});
+
 ipcMain.on('qrcodeImg', (event, args) => {
-  console.log('***************')
+  // console.log('***************')
   // fs.writeFileSync(path.join(os.tmpdir(), 'screenshot.png'),  args,function (error) {
   fs.writeFile(path.join(os.tmpdir(), 'screenshot.png'), args, function (error) {
 
-    console.log(path.join(os.tmpdir(), 'screenshot.png'), '*****');
+    // console.log(path.join(os.tmpdir(), 'screenshot.png'), '*****');
     if (error) return console.log(error)
 
     var buffer = fs.readFileSync(path.join(os.tmpdir(), 'screenshot.png'));
@@ -449,7 +553,7 @@ ipcMain.on('qrcodeImg', (event, args) => {
           // TODO handle error
         }
         // console.log(value.result);
-        console.log(value, '#######');
+        // console.log(value, '#######');
       };
       qr.decode(image.bitmap);
     });
@@ -462,15 +566,18 @@ ipcMain.on('qrcodeImg', (event, args) => {
 
 // 打开web窗口
 ipcMain.on('webSiteData', (event, webSiteData, auuid) => {
-  console.log(webSiteData, 'webSiteData');
+  // console.log(webSiteData, 'webSiteData');
 
   // webSiteWindow.loadURL(`${webSiteData}?t=${new Date().getTime()}`);
+
+  globalWebSite = webSiteData;
 
   var webSiteWindow2 = new BrowserWindow({
     width: 1024,
     height: 681,
     title: 'Ale Client',
     show: false,
+    // frame: false,
     webPreferences: {
       webSecurity: false,
       nodeIntegration: true,
@@ -480,14 +587,14 @@ ipcMain.on('webSiteData', (event, webSiteData, auuid) => {
 
 
   // webSiteWindow2.loadURL(isDev ? `http://localhost:3000/#/website?site=${webSiteData}&timer=${new Date().getTime()}` : `file://${path.join(__dirname, '../build/index.html#website')}?site=${webSiteData}&timer=${new Date().getTime()}`);
-  webSiteWindow2.loadURL(isDev ? `http://localhost:3000/#/website?site=${webSiteData}&aclientId=${auuid}` : `file://${path.join(__dirname, '../build/index.html#website')}?site=${webSiteData}&timer=${new Date().getTime()}&aclientId=${auuid}`);
+  webSiteWindow2.loadURL(isDev ? `http://localhost:3000/#/website?site=${webSiteData}&aclientId=${auuid}` : `file://${path.join(__dirname, '../build/index.html#website')}?site=${globalWebSite}&timer=${new Date().getTime()}&aclientId=${auuid}`);
 
   // webSiteWindow2.webContents.send('website', webSiteData, new Date().getTime());
 
   //只有在开发环境打开控制台
-  // if (isDev) {
-  webSiteWindow2.webContents.openDevTools();
-  // }
+  if (isDev) {
+    webSiteWindow2.webContents.openDevTools();
+  }
 
   webSiteWindow2.show();
   // console.log(webSiteWindow.webContents.session, '*****');
@@ -515,20 +622,20 @@ function defaultData() {
 
     docs.push({
       id: "00000000-0000-0000-0000-000000000000",
-      title: "和汽ERP",
-      address: "http://erp.heqiauto.com",
-      sortTitle: "和汽ERP".substr(0, 2),
+      title: "xxxx",
+      address: "http://www.youyong.ba",
+      sortTitle: "xxxxx".substr(0, 2),
       color: "#d8d8d8",
       isEdit: false
     });
   }
-
+  //阿乐供应商协同平台
   if (package.env == 'aleqipei') {
     docs.push({
       id: "00000000-0000-0000-0000-000000000000",
-      title: "阿乐汽配ERP",
-      address: "http://s.aleqipei.com",
-      sortTitle: "阿乐汽配ERP".substr(0, 2),
+      title: "xxxxx",
+      address: "http://www.youyong.ba",
+      sortTitle: "xxxx".substr(0, 2),
       color: "#d8d8d8",
       isEdit: false
     });
@@ -571,7 +678,7 @@ ipcMain.on('app-removeAddress', (event) => {
     // tempArr.push({
     //   id: "00000000-0000-0000-0000-000000000000",
     //   title: "和汽ERP",
-    //   address: "http://erp.heqiauto.com",
+    //   address: "http://xxxxxxxxx",
     //   sortTitle: "和汽ERP".substr(0, 2),
     //   color: "#d8d8d8",
     //   isEdit: false
@@ -581,7 +688,7 @@ ipcMain.on('app-removeAddress', (event) => {
 
       data_db.find({}, function (err, docs) {
 
-        console.log(docs);
+        // console.log(docs);
         mainWindow.webContents.send('app-sendData', docs);
       });
     });
@@ -597,8 +704,8 @@ ipcMain.on('app-removeCard', (event, args) => {
 
 
   data_db.remove({ id: args }, {}, function (err, numRemoved) {
-    console.log(args, 'argsargs');
-    console.log(err, numRemoved, '###****###');
+    // console.log(args, 'argsargs');
+    // console.log(err, numRemoved, '###****###');
     data_db.find({}, function (err, docs) {
       mainWindow.webContents.send('app-sendData', docs);
     });
@@ -608,7 +715,7 @@ ipcMain.on('app-removeCard', (event, args) => {
 
 
 ipcMain.on('app-testtest', (event, args) => {
-  console.log(args, 'herehereherehertesttest111');
+  // console.log(args, 'herehereherehertesttest111');
 })
 
 
@@ -626,14 +733,14 @@ ipcMain.on('app-addAddress', (event, args) => {
 //编辑地址
 ipcMain.on('app-editAddress', (event, args) => {
 
-  console.log(args, '*****');
+  // console.log(args, '*****');
   data_db.update({ id: args.id }, { $set: { title: args.title, address: args.address, color: args.color, sortTitle: args.sortTitle } }, { multi: true }, function (err, numReplaced) {
 
-    console.log(err, numReplaced, '&&&&&&&&&&&&&&&&');
+    // console.log(err, numReplaced, '&&&&&&&&&&&&&&&&');
 
     data_db.find({}, function (err, docs) {
 
-      console.log(docs, 'docs*****');
+      // console.log(docs, 'docs*****');
       mainWindow.webContents.send('app-sendData', docs, 'edit');
     });
   });
@@ -648,13 +755,10 @@ ipcMain.on('close-main', (event, arg) => {
 //获取uuid
 ipcMain.on('app-getUuid', (event, args) => {
 
-  console.log('dddddddddddddddddddd');
-
   uuid_db.find({}, function (err, uuidData) {
 
-    console.log(uuidData, '*****');
     if (uuidData != false) {
-      mainWindow.webContents.send('app-setUuid', uuidData[0].uuid);
+      mainWindow.webContents.send('app-setUuid', uuidData[0].uuid, package.platform);
     } else {
 
       var data = {
@@ -664,8 +768,8 @@ ipcMain.on('app-getUuid', (event, args) => {
       uuid_db.insert(data, function (err, new_doc) {
 
         uuid_db.find({}, function (err, uuidObj) {
-          console.log(uuidObj, 'uuidObj');
-          mainWindow.webContents.send('app-setUuid', uuidObj[0].uuid);
+          // console.log(uuidObj, 'uuidObj');
+          mainWindow.webContents.send('app-setUuid', uuidObj[0].uuid, package.platform);
         });
       });
     }
@@ -680,13 +784,74 @@ ipcMain.on('app-getUuid', (event, args) => {
 //显示通知
 ipcMain.on('app-outputWSData', (event, args) => {
 
-  var notification = new Notification({
-    title: args.msg.title,
-    body: args.msg.describe
-  })
+  globalWebSite = args.msg.url;
+  if (process.platform === 'darwin') {
+    var notification = new Notification({
+      title: args.msg.title,
+      body: args.msg.describe
+    })
+    notification.show();
+
+    notification.addListener('click', function () {
+
+      clearInterval(timer);
+
+
+      tray.setImage(path.join(__dirname, '16x16.png'));
+
+
+      var webSiteWindow2 = new BrowserWindow({
+        width: 1024,
+        height: 681,
+        title: 'Ale Client',
+        show: false,
+        frame: false,
+        webPreferences: {
+          webSecurity: false,
+          nodeIntegration: true,
+          webviewTag: true
+        }
+      });
+
+      console.log(globalWebSite, 'globalWebSiteglobalWebSiteglobalWebSite');
+
+      // webSiteWindow2.loadURL(isDev ? `http://localhost:3000/#/website?site=${webSiteData}&timer=${new Date().getTime()}` : `file://${path.join(__dirname, '../build/index.html#website')}?site=${webSiteData}&timer=${new Date().getTime()}`);
+      webSiteWindow2.loadURL(isDev ? `http://localhost:3000/#/backwebsite?site=${globalWebSite}` : `file://${path.join(__dirname, '../build/index.html#backwebsite')}?site=${globalWebSite}&timer=${new Date().getTime()}`);
+
+      // webSiteWindow2.webContents.send('website', webSiteData, new Date().getTime());
+
+      //只有在开发环境打开控制台
+      if (isDev) {
+        webSiteWindow2.webContents.openDevTools();
+      }
+
+      webSiteWindow2.show();
+      // console.log(webSiteWindow.webContents.session, '*****');
+      // console.log(webSiteWindow, '*****');
+      webSiteWindow2.maximize();
+
+
+    });
+
+  } else {
+    // tray.displayBalloon({
+    //   title: args.msg.title,
+    //   content: args.msg.describe
+    // })
+
+
+    setTimeout(function () {
+
+      tray.setImage(path.join(__dirname, '32x32.png'));
+
+      tray.displayBalloon({ title: args.msg.title, 'content': args.msg.describe });
+
+    }, 500);
+
+  }
+
 
   //通知 
-  // var count = 0,timer=null;
 
   clearInterval(timer);
   timer = setInterval(function () {
@@ -708,49 +873,21 @@ ipcMain.on('app-outputWSData', (event, args) => {
     }
   }, 500);
 
-  notification.show();
 
-  // notification.click(function () {
-  //   console.log('已触发');
-  // })
-
-  console.log(notification);
-
-  notification.addListener('click', function () {
-
-
-
-
-
-    var webSiteWindow2 = new BrowserWindow({
-      width: 1024,
-      height: 681,
-      title: 'Ale Client',
-      show: false,
-      webPreferences: {
-        webSecurity: false,
-        nodeIntegration: true,
-        webviewTag: true
-      }
-    });
-
-
-    // webSiteWindow2.loadURL(isDev ? `http://localhost:3000/#/website?site=${webSiteData}&timer=${new Date().getTime()}` : `file://${path.join(__dirname, '../build/index.html#website')}?site=${webSiteData}&timer=${new Date().getTime()}`);
-    webSiteWindow2.loadURL(isDev ? `http://localhost:3000/#/website?site=http://s.heqi.com:10080/site/login` : `file://${path.join(__dirname, '../build/index.html#website')}?site=${webSiteData}&timer=${new Date().getTime()}`);
-
-    // webSiteWindow2.webContents.send('website', webSiteData, new Date().getTime());
-
-    //只有在开发环境打开控制台
-    if (isDev) {
-      webSiteWindow2.webContents.openDevTools();
-    }
-
-    webSiteWindow2.show();
-    // console.log(webSiteWindow.webContents.session, '*****');
-    // console.log(webSiteWindow, '*****');
-    webSiteWindow2.maximize();
-
-
-  });
 });
 
+
+
+
+/**
+ 
+| 命令 | 说明|
+| --- |--- |
+| npm run build | 代码压缩 |
+| electron-builder | 打包 |
+| 把dist里的内容全部copy 到 http服务器|  用来做软件更新 |
+
+| electron-builder -c.extraMetadata.env=xxxxx | Mac |
+
+
+ */

@@ -11,6 +11,7 @@ const App = (state, action) => {
     if (typeof state === "undefined") {
         //初始化
         return {
+            list: [],
             addAddressVisible: false,
             editAddAddressVisible: false,
             background: '#d8d8d8',
@@ -30,6 +31,11 @@ const App = (state, action) => {
 
 
     switch (action.type) {
+
+        case "APP_LIST":
+            return Object.assign({}, state, {
+                list: action.payload
+            });
 
         case "APP_ADDADDRESSVISIBLE":
             //填加菜单弹出层
